@@ -1,0 +1,63 @@
+{
+  "best_global_step": 172,
+  "best_metric": 7.419343948364258,
+  "best_model_checkpoint": "/mnt/c/Users/baraj/OneDrive/Desktop/classes/security/Research/Implementation/models/axon_lora/checkpoint-172",
+  "epoch": 1.0,
+  "eval_steps": 500,
+  "global_step": 172,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 0.29069767441860467,
+      "grad_norm": 0.09593003243207932,
+      "learning_rate": 0.00018680000000000001,
+      "loss": 8.4437,
+      "step": 50
+    },
+    {
+      "epoch": 0.5813953488372093,
+      "grad_norm": 0.06303994357585907,
+      "learning_rate": 0.0001668,
+      "loss": 7.8312,
+      "step": 100
+    },
+    {
+      "epoch": 0.872093023255814,
+      "grad_norm": 0.044804755598306656,
+      "learning_rate": 0.00014680000000000002,
+      "loss": 7.8967,
+      "step": 150
+    },
+    {
+      "epoch": 1.0,
+      "eval_loss": 7.419343948364258,
+      "eval_runtime": 3929.7716,
+      "eval_samples_per_second": 0.037,
+      "eval_steps_per_second": 0.037,
+      "step": 172
+    }
+  ],
+  "logging_steps": 50,
+  "max_steps": 516,
+  "num_input_tokens_seen": 0,
+  "num_train_epochs": 3,
+  "save_steps": 500,
+  "stateful_callbacks": {
+    "TrainerControl": {
+      "args": {
+        "should_epoch_stop": false,
+        "should_evaluate": false,
+        "should_log": false,
+        "should_save": true,
+        "should_training_stop": false
+      },
+      "attributes": {}
+    }
+  },
+  "total_flos": 2.794772384396083e+16,
+  "train_batch_size": 1,
+  "trial_name": null,
+  "trial_params": null
+}

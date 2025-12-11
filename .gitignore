@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files with potential secrets (example Terraform files from repos)
+data/terraform_files/
+data/repos/
+data/scans/
+data/empty_temp/
+
+# Model checkpoints (too large)
+models/axon_lora/checkpoint-*/
+
+# Temporary files
+*.log
+*.tmp
+
