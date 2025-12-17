@@ -1,0 +1,60 @@
+{
+  "model_name": "codellama/CodeLlama-7b-Instruct-hf",
+  "lora_dir": "/mnt/c/Users/baraj/Desktop/Classes/Security/AxonInfraLinter/SecurityResearchProject-main/models/axon_lora_codellama",
+  "run_index": 1,
+  "timestamp_utc": "20251217_075535",
+  "eval_mode": "stochastic",
+  "sampling_config": {
+    "temperature": 0.5,
+    "top_p": 0.9,
+    "top_k": 50,
+    "seed": 43
+  },
+  "runtime_seconds": 345.9095895290375,
+  "metrics": {
+    "accuracy": 0.3825503355704698,
+    "precision": 0.3783783783783784,
+    "recall": 1.0,
+    "f1": 0.5490196078431373
+  },
+  "baselines": {
+    "checkov": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "tfsec": {
+      "accuracy": 0.6241610738255033,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "combined": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "confusion": {
+    "tp": 56,
+    "tn": 1,
+    "fp": 92,
+    "fn": 0
+  },
+  "distribution": {
+    "true": {
+      "secure": 93,
+      "insecure": 56,
+      "secure_pct": 62.41610738255034,
+      "insecure_pct": 37.58389261744966
+    },
+    "pred": {
+      "secure": 1,
+      "insecure": 148,
+      "secure_pct": 0.6711409395973155,
+      "insecure_pct": 99.32885906040268
+    }
+  }
+}

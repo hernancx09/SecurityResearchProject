@@ -1,0 +1,28 @@
+{
+  "model_key": "codellama",
+  "base_model": "codellama/CodeLlama-7b-Instruct-hf",
+  "lora_dir": "/mnt/c/Users/baraj/Desktop/Classes/Security/AxonInfraLinter/SecurityResearchProject-main/models/axon_lora_codellama",
+  "num_runs": 5,
+  "metrics_summary": {
+    "accuracy": {
+      "mean": 0.37986577181208053,
+      "std": 0.005369127516778515
+    },
+    "precision": {
+      "mean": 0.3770411003458909,
+      "std": 0.0015015626040215876
+    },
+    "recall": {
+      "mean": 0.9964285714285714,
+      "std": 0.007142857142857162
+    },
+    "f1": {
+      "mean": 0.547061535935816,
+      "std": 0.001042153709186357
+    }
+  },
+  "runtime_summary": {
+    "mean": 345.8917614459991,
+    "std": 0.17247933873195714
+  }
+}
