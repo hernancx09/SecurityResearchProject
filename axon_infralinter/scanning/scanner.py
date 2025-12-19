@@ -154,15 +154,32 @@ def run_tfsec_on_file(tf_path: Path) -> Dict:
     """
     Run tfsec on a single Terraform file, returning parsed JSON (or {} on failure).
     
-    Note: tfsec requires a directory, not a file. We'll run it on the file's parent directory
-    and filter results to only this file. Also, tfsec returns exit code 1 when it finds issues.
+    Note: tfsec requires a directory, not a file. We run it on the file's parent directory
+    and filter results to only this file.
+    
+    Args:
+        tf_path: Path to the Terraform file to scan
+    
+    Returns:
+        Parsed JSON dictionary from tfsec, or empty dict on failure
+    
+    Student understanding:
+        A critical bug I had to fix: tfsec uses non-standard exit codes:
+        - Exit code 0: Scan succeeded, no issues found
+        - Exit code 1: Scan succeeded, issues found (this is SUCCESS, not failure!)
+        - Exit code 2+: Actual errors (tool not found, invalid input, etc.)
+        
+        Many tools use non-zero exit codes to indicate errors, but here 1 is actually a
+        successful run. Misinterpreting this would cause us to silently drop valid security
+        findings, severely biasing our dataset toward secure examples. This understanding
+        came from reading tfsec's documentation and experimenting on small examples.
     """
     output_path = SCANS_ROOT / "tfsec" / (tf_path.name + ".json")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # tfsec requires a directory, not a file
-    # Since all our files are in TERRAFORM_FILES_ROOT, we can run on that directory
-    # and filter results to only this file
+    # Since all our files are in TERRAFORM_FILES_ROOT, we run on the parent directory
+    # and filter results to only this file in parse_tfsec_findings()
     cmd = find_tfsec_command() + [
         str(tf_path.parent),
         "--format", "json",
@@ -177,8 +194,10 @@ def run_tfsec_on_file(tf_path: Path) -> Dict:
             timeout=30,
         )
         
-        # tfsec returns 1 when it finds issues, 0 when clean
-        # Exit code 2+ indicates actual errors
+        # CRITICAL: tfsec returns 1 when it finds issues, 0 when clean
+        # Exit code 2+ indicates actual errors (tool not found, invalid input, etc.)
+        # This non-standard behavior is easy to misinterpret - many tools use non-zero
+        # to indicate errors, but here 1 is actually a successful scan with findings!
         if result.returncode >= 2:
             return {}
         
@@ -236,7 +255,24 @@ def parse_tfsec_findings(data: Dict, tf_path: Path) -> List[Finding]:
 
 
 def is_secure(checkov_findings: List[Finding], tfsec_findings: List[Finding]) -> bool:
-    """Determine if file is secure (no HIGH or CRITICAL findings)."""
+    """
+    Determine if a file should be labeled as secure based on scanner findings.
+    
+    Args:
+        checkov_findings: List of findings from Checkov
+        tfsec_findings: List of findings from tfsec
+    
+    Returns:
+        True if file has no HIGH or CRITICAL findings from either tool, False otherwise
+    
+    Student understanding:
+        We use a security-centric definition: a file is insecure if it has ANY high-severity
+        issue, not just if it has more issues than some threshold. This is conservative but
+        appropriate for security applications - even one critical vulnerability makes a file
+        insecure. We combine findings from both tools using OR logic - if either tool finds
+        a high-severity issue, the file is marked insecure. This maximizes recall (fewer
+        false negatives) which is critical in security contexts.
+    """
     all_findings = checkov_findings + tfsec_findings
     for finding in all_findings:
         if finding.severity in ["HIGH", "CRITICAL"]:

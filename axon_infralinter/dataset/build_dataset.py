@@ -49,6 +49,24 @@ def load_labels(path: Path) -> List[Dict]:
 
 
 def build_prompt(file_text: str) -> str:
+    """
+    Construct the instruction prompt that will be given to the LLM.
+    
+    Args:
+        file_text: The Terraform file content
+    
+    Returns:
+        Complete prompt string with instructions and file content
+    
+    Student understanding:
+        Clear instructions help the model understand the task. The prompt explicitly lists
+        what to look for (IAM policies, encryption, public exposure, secrets, network configs),
+        which guides the model's attention. The structured output format (exactly two lines)
+        makes parsing easier and more reliable than free-form text. Role-playing ("You are a
+        security auditor") helps the model adopt the right perspective, similar to how
+        instruction-tuned models are trained. Using the same prompt format in training and
+        inference is crucial - the model learned to respond to this specific format.
+    """
     instruction = (
         "You are a security auditor for Terraform Infrastructure-as-Code.\n"
         "Given the following Terraform file, decide if it is SECURE or INSECURE "
@@ -71,31 +89,52 @@ def build_target(secure: bool) -> str:
 
 
 def main() -> None:
+    """
+    Build balanced train/validation/test splits from labeled Terraform files.
+    
+    Pipeline:
+        1. Load labels from file_labels.jsonl
+        2. Filter to files that still exist on disk
+        3. Split into secure vs. insecure subsets
+        4. Sample up to TARGET_NUM_FILES with equal class sizes
+        5. Shuffle and split into train/val/test by configured ratios
+    
+    Student understanding:
+        Class balancing is critical. Real-world security datasets are naturally imbalanced
+        (insecure examples are relatively rare). Without balancing, simple baselines like
+        "always predict secure" achieve deceptively high accuracy, masking true performance
+        differences. By enforcing equal numbers of secure and insecure examples, we ensure
+        that models must actually learn to distinguish between classes, not just predict the
+        majority. Fixed random seed (42) is essential for reproducibility - same dataset
+        splits across runs enables fair comparison between model variants.
+    """
     ensure_directories()
     labels_path = PROJECT_ROOT / "data" / "file_labels.jsonl"
     print(f"Loading labels from {labels_path}")
     labels = load_labels(labels_path)
     print(f"Loaded {len(labels)} labeled files")
 
-    # Filter to those that still exist on disk
+    # Filter to those that still exist on disk (files may have been deleted during cleanup)
     labels = [r for r in labels if Path(r["corpus_path"]).exists()]
     print(f"After filtering for existing files: {len(labels)} files")
 
-    # Split by class
+    # Split by class - this is the first step toward balancing
     secure_records = [r for r in labels if r.get("secure", False)]
     insecure_records = [r for r in labels if not r.get("secure", False)]
 
     print(f"Secure files: {len(secure_records)}, Insecure files: {len(insecure_records)}")
 
+    # Balance classes: sample equal numbers from each class
+    # This prevents class imbalance from dominating metrics
     target_per_class = TARGET_NUM_FILES // 2
-    random.seed(42)
+    random.seed(42)  # Fixed seed for reproducibility
     random.shuffle(secure_records)
     random.shuffle(insecure_records)
 
     secure_sample = secure_records[:target_per_class]
     insecure_sample = insecure_records[:target_per_class]
     all_records = secure_sample + insecure_sample
-    random.shuffle(all_records)
+    random.shuffle(all_records)  # Shuffle combined set before splitting
 
     n_total = len(all_records)
     n_train = int(n_total * TRAIN_RATIO)

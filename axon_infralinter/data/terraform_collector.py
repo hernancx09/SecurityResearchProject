@@ -30,10 +30,25 @@ class TerraformFileRecord:
 
 
 def iter_terraform_files(repo_dir: Path) -> Iterable[Path]:
-    """Yield all .tf files in a repository directory."""
+    """
+    Recursively find all Terraform files in a repository directory.
+    
+    Args:
+        repo_dir: Root directory of a cloned repository
+    
+    Yields:
+        Path objects for each .tf file found
+    
+    Student understanding:
+        Using rglob() recursively searches all subdirectories, which is important because
+        Terraform projects often organize files into modules, environments, or feature
+        directories. A simple glob("*.tf") would miss files in subdirectories, severely
+        reducing our corpus size.
+    """
     if not repo_dir.exists():
         return
     
+    # rglob recursively searches all subdirectories
     for p in repo_dir.rglob("*.tf"):
         if p.is_file():
             yield p
@@ -45,18 +60,35 @@ def collect_files(
     max_per_repo: Optional[int] = None,
 ) -> List[TerraformFileRecord]:
     """
-    Collect Terraform files from repos with optional limits.
+    Collect Terraform files from cloned repositories into a flat corpus directory.
+    
+    This function extracts all .tf files from successfully cloned repositories and copies
+    them into a single flat directory with unique names that preserve traceability.
     
     Args:
-        manifest: Repository manifest
-        max_total_files: Maximum total files to collect (None = no limit)
-        max_per_repo: Maximum files per repository (None = no limit)
+        manifest: List of repository records from github_repos_manifest.jsonl. Each
+            record should contain at least clone_ok and cloned_path fields.
+        max_total_files: Optional cap on the total number of .tf files to copy across
+            all repositories. If None, no global cap is applied.
+        max_per_repo: Optional cap on the number of .tf files to copy per repository.
+            This prevents a single large repo from dominating the corpus.
+    
+    Returns:
+        A list of TerraformFileRecord objects describing each copied file.
+    
+    Student understanding:
+        This step decouples the downstream scanning pipeline from git repository structure.
+        By flattening to a single directory, we simplify scanner invocation (no need to
+        handle nested directories or git submodules) and make it easier to share the dataset
+        as a static corpus. The unique filename encoding (repo__path__to__file.tf) preserves
+        traceability - when we see a misconfiguration, we can trace it back to the original
+        repository and understand which projects contribute which types of issues.
     """
     TERRAFORM_FILES_ROOT.mkdir(parents=True, exist_ok=True)
     records: List[TerraformFileRecord] = []
     repo_file_counts: dict[str, int] = defaultdict(int)
 
-    # Filter to only repos that were successfully cloned
+    # Filter to only repos that were successfully cloned (skip failed clones gracefully)
     valid_repos = [
         rec for rec in manifest
         if rec.get("clone_ok") and rec.get("cloned_path")
@@ -96,7 +128,10 @@ def collect_files(
                     files_skipped += 1
                     continue
 
-                # Create unique filename: repo__path__to__file.tf
+                # Create unique filename that encodes original repo and path
+                # Format: {repo_name}__{relative_path}.tf
+                # This preserves traceability - we can always map back to the source repository
+                # Example: aws-ia__terraform-aws-eks-blueprints__patterns__aws-neuron-efa__main.tf
                 relative_path = tf_path.relative_to(repo_dir)
                 safe_name = str(relative_path).replace("/", "__").replace("\\", "__")
                 target_name = f"{repo_name.replace('/', '__')}__{safe_name}"
